@@ -11,8 +11,6 @@ DATABASE = "notevault.db"
 UPLOAD_FOLDER = "uploads"
 
 
-# ---------- DB helpers ----------
-
 def get_db():
     db = getattr(g, "_database", None)
     if db is None:
@@ -50,8 +48,6 @@ def init_db():
     db.commit()
     db.close()
 
-
-# ---------- Auth ----------
 
 @app.route("/")
 def index():
@@ -96,12 +92,9 @@ def login():
         hashed = hashlib.md5(password.encode()).hexdigest()
 
         db = get_db()
-        # VULN #1: SQL Injection in login
-        user = db.execute(
-    "SELECT * FROM users WHERE username = ? AND password = ?",
-    (username, hashed)
-).fetchone()
-
+        # VULN #1: SQL Injection in login — f-string, no parameterization
+        query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{hashed}'"
+        user = db.execute(query).fetchone()
 
         if user:
             session["user_id"] = user["id"]
@@ -119,8 +112,6 @@ def logout():
     return redirect(url_for("login"))
 
 
-# ---------- Dashboard ----------
-
 @app.route("/dashboard")
 def dashboard():
     if "user_id" not in session:
@@ -131,7 +122,6 @@ def dashboard():
 
     if search:
         # VULN #1 (also here): SQL Injection in search
-        # Payload: q = ' UNION SELECT id,1,username,password,NULL FROM users --
         query = f"SELECT * FROM notes WHERE user_id = {session['user_id']} AND title LIKE '%{search}%'"
         notes = db.execute(query).fetchall()
     else:
@@ -141,8 +131,6 @@ def dashboard():
 
     return render_template("dashboard.html", notes=notes, search=search)
 
-
-# ---------- Notes ----------
 
 @app.route("/note/new", methods=["GET", "POST"])
 def new_note():
@@ -159,7 +147,6 @@ def new_note():
             f = request.files["file"]
             if f.filename:
                 # VULN #6: Path Traversal — filename not sanitized
-                # Payload: filename = "../../app.py"
                 filename = f.filename
                 f.save(os.path.join(UPLOAD_FOLDER, filename))
 
@@ -180,14 +167,8 @@ def view_note(note_id):
         return redirect(url_for("login"))
 
     db = get_db()
-    # VULN #2: IDOR — no ownership check, any logged-in user can view any note
-    note = db.execute(
-    "SELECT * FROM notes WHERE id = ? AND user_id = ?",
-    (note_id, session["user_id"])
-).fetchone()
-if not note:
-    return "Нет доступа", 403
-
+    # VULN #2: IDOR — no ownership check
+    note = db.execute("SELECT * FROM notes WHERE id = ?", (note_id,)).fetchone()
 
     if not note:
         return "Note not found", 404
@@ -209,7 +190,6 @@ def delete_note(note_id):
 
 @app.route("/uploads/<path:filename>")
 def uploaded_file(filename):
-    # VULN #6: Path Traversal served here too
     return send_from_directory(UPLOAD_FOLDER, filename)
 
 
