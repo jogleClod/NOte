@@ -97,9 +97,11 @@ def login():
 
         db = get_db()
         # VULN #1: SQL Injection in login
-        # Payload: username = ' OR '1'='1' --
-        query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{hashed}'"
-        user = db.execute(query).fetchone()
+        user = db.execute(
+    "SELECT * FROM users WHERE username = ? AND password = ?",
+    (username, hashed)
+).fetchone()
+
 
         if user:
             session["user_id"] = user["id"]
