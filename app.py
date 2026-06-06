@@ -181,7 +181,13 @@ def view_note(note_id):
 
     db = get_db()
     # VULN #2: IDOR — no ownership check, any logged-in user can view any note
-    note = db.execute("SELECT * FROM notes WHERE id = ?", (note_id,)).fetchone()
+    note = db.execute(
+    "SELECT * FROM notes WHERE id = ? AND user_id = ?",
+    (note_id, session["user_id"])
+).fetchone()
+if not note:
+    return "Нет доступа", 403
+
 
     if not note:
         return "Note not found", 404
