@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ note.title }}{% endblock %}
+{% block content %}
+<div class="note-view">
+    <h2>{{ note.title }}</h2>
+    <div class="note-content">
+        {# VULN #4: |safe disables autoescaping → Stored XSS #}
+        {{ note.content | safe }}
+    </div>
+    {% if note.filename %}
+    <p>Attachment: <a href="{{ url_for('uploaded_file', filename=note.filename) }}">{{ note.filename }}</a></p>
+    {% endif %}
+    <div class="note-actions">
+        <a href="{{ url_for('dashboard') }}">← Back</a>
+        <form method="POST" action="{{ url_for('delete_note', note_id=note.id) }}" style="display:inline">
+            <button type="submit" class="btn-danger">Delete</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

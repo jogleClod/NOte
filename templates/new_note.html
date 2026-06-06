@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}New Note{% endblock %}
+{% block content %}
+<h2>New Note</h2>
+<form method="POST" enctype="multipart/form-data" class="note-form">
+    <input type="text" name="title" placeholder="Title" required>
+    <textarea name="content" placeholder="Write your note here..." rows="8"></textarea>
+    <label>Attach file (optional):</label>
+    <input type="file" name="file">
+    <button type="submit">Save Note</button>
+</form>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}My Notes{% endblock %}
+{% block content %}
+<div class="dashboard-header">
+    <h2>My Notes</h2>
+    <a class="btn" href="{{ url_for('new_note') }}">+ New Note</a>
+</div>
+
+<form method="GET" class="search-form">
+    <input type="text" name="q" value="{{ search }}" placeholder="Search notes...">
+    <button type="submit">Search</button>
+</form>
+
+{% if notes %}
+<div class="notes-grid">
+    {% for note in notes %}
+    <div class="note-card">
+        <h3><a href="{{ url_for('view_note', note_id=note.id) }}">{{ note.title }}</a></h3>
+        <p>{{ note.content[:100] }}{% if note.content|length > 100 %}…{% endif %}</p>
+        <div class="note-actions">
+            <a href="{{ url_for('view_note', note_id=note.id) }}">View</a>
+            <form method="POST" action="{{ url_for('delete_note', note_id=note.id) }}" style="display:inline">
+                <button type="submit" class="btn-danger" onclick="return confirm('Delete?')">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p class="empty">No notes yet. <a href="{{ url_for('new_note') }}">Create one!</a></p>
+{% endif %}
+{% endblock %}
